@@ -18,7 +18,7 @@
 #-----------------------------------------------------------
 
 import tensorflow as tf
-
+from initializer import complex_random_uniform
 
 def complex_lstm_cell(x, a_prev, c_prev):
   """
@@ -80,28 +80,28 @@ def init_lstm(input_size, activation_size, path=None):
   :param path: a string that denotes a path to predefined weights
   :return:
   """
-  assert type(path) is str or path == None
+
   with tf.variable_scope('lstm'):
     tf.get_variable('wf', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('bf', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('wu', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('bu', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('wc', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('bc', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('wo', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('bo', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('wy', shape=(input_size, activation_size), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.get_variable('by', shape=(input_size, 1), dtype=tf.complex64,
-                    initializer=tf.initializers.zeros)
+                    initializer=complex_random_uniform)
     tf.global_variables_initializer()
 
 

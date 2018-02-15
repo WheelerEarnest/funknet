@@ -30,27 +30,17 @@ def init_lstm(input_size, activation_size, path=None):
   :return:
   """
   if path is None:
-    with tf.variable_scope('lstm'):
-      tf.get_variable('wf', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('bf', shape=(activation_size, 1), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('wu', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('bu', shape=(activation_size, 1), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('wc', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('bc', shape=(activation_size, 1), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('wo', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('bo', shape=(activation_size, 1), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('wy', shape=(input_size, activation_size), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
-      tf.get_variable('by', shape=(input_size, 1), dtype=tf.complex64,
-                      initializer=complex_random_uniform)
+    with tf.variable_scope('lstm', dtype=tf.complex64, initializer=complex_random_uniform):
+      tf.get_variable('wf', shape=(activation_size, activation_size + input_size))
+      tf.get_variable('bf', shape=(activation_size, 1))
+      tf.get_variable('wu', shape=(activation_size, activation_size + input_size))
+      tf.get_variable('bu', shape=(activation_size, 1))
+      tf.get_variable('wc', shape=(activation_size, activation_size + input_size))
+      tf.get_variable('bc', shape=(activation_size, 1))
+      tf.get_variable('wo', shape=(activation_size, activation_size + input_size))
+      tf.get_variable('bo', shape=(activation_size, 1))
+      tf.get_variable('wy', shape=(input_size, activation_size))
+      tf.get_variable('by', shape=(input_size, 1))
 
 
 def complex_lstm_cell(x, a_prev, c_prev):

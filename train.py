@@ -46,5 +46,5 @@ song = encode_audio(new_song, 'wav', samples_per_second=44100)
 write = tf.write_file('crap.wav', song)
 
 with tf.Session() as sess:
-  tf.global_variables_initializer()
+  sess.run(tf.global_variables_initializer())
   sess.run(write)

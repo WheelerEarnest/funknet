@@ -17,8 +17,41 @@
 #   https://www.coursera.org/learn/nlp-sequence-models
 #-----------------------------------------------------------
 
+import numpy as np
 import tensorflow as tf
 from initializer import complex_random_uniform
+
+def init_lstm(input_size, activation_size, path=None):
+  """
+  Initializes the weights and biases for the lstm
+  :param input_size: the size of the input vectors
+  :param activation_size: the size of the activation vector
+  :param path: a string that denotes a path to predefined weights
+  :return:
+  """
+  if path == None:
+    with tf.variable_scope('lstm'):
+      tf.get_variable('wf', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('bf', shape=(activation_size, 1), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('wu', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('bu', shape=(activation_size, 1), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('wc', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('bc', shape=(activation_size, 1), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('wo', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('bo', shape=(activation_size, 1), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('wy', shape=(input_size, activation_size), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.get_variable('by', shape=(input_size, 1), dtype=tf.complex64,
+                      initializer=complex_random_uniform)
+      tf.global_variables_initializer()
 
 def complex_lstm_cell(x, a_prev, c_prev):
   """
@@ -72,37 +105,30 @@ def complex_lstm_cell(x, a_prev, c_prev):
     y = wy @ a_next + by
     return a_next, c_next, y
 
-def init_lstm(input_size, activation_size, path=None):
+def complex_lstm_forward(X, a0, c0):
   """
-  Initializes the weights and biases for the lstm
-  :param input_size: the size of the input vectors
-  :param activation_size: the size of the activation vector
-  :param path: a string that denotes a path to predefined weights
+  This method allows for you to execute the lstm
+  :param X: input Vectors should be of size (stfsBins, Frames)
+  :param a0: initial state activations
+  :param c0: initial state memory cell
   :return:
   """
 
-  with tf.variable_scope('lstm'):
-    tf.get_variable('wf', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('bf', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('wu', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('bu', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('wc', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('bc', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('wo', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('bo', shape=(activation_size, 1), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('wy', shape=(input_size, activation_size), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.get_variable('by', shape=(input_size, 1), dtype=tf.complex64,
-                    initializer=complex_random_uniform)
-    tf.global_variables_initializer()
+  def body(i, a, c, outputs):
+    a_next, c_next, out = complex_lstm_cell(X[:,i], a, c)
+    return i+1, a_next, c_next, tf.concat([outputs, out], 1)
+
+  def cond(i, a, c, outputs):
+    return i < tf.shape(X)[1]
+
+  __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, tf.zeros(tf.shape(X), tf.complex64)),
+                                      shape_invariants=(tf.TensorShape([]),
+                                                        tf.TensorShape([tf.shape(X)[1]]),
+                                                        tf.TensorShape([tf.shape(X)[1]]),
+                                                        tf.TensorShape([None])))
+  return outputs
+
+
 
 
 

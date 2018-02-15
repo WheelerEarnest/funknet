@@ -39,8 +39,8 @@ class complex_random_uniform(Initializer):
 
   def get_config(self):
     return {
-      "minval": self.minval,
-      "maxval": self.maxval,
-      "seed": self.seed,
-      "dtype": self.dtype.name
+      'minval': self.minval,
+      'maxval': self.maxval,
+      'seed': self.seed,
+      'dtype': self.dtype.name
     }

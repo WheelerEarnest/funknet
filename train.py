@@ -1,0 +1,46 @@
+#----------------------------------------------------------
+# Author: Wheeler Earnest
+#
+# Project: FunkNet
+#
+# Description: Where the training of the net happens, still trying to work out kinks
+#
+# Sources: When writing this I consulted the paper "Deep Complex Networks"
+#   by Trabelsi et al. for information regarding activations and weight
+#   initializations
+#
+#   Inspired by https://github.com/jisungk/deepjazz
+#
+#   Or to be more specific, an assignment in the deep learning
+#   specialization on Coursera: 
+#   https://www.coursera.org/learn/nlp-sequence-models
+#------------------------------------------------------------------------------------------------------
+
+import numpy as np
+import tensorflow as tf
+from lstm import *
+from tensorflow.contrib.signal import *
+from tensorflow.contrib.ffmpeg import encode_audio, decode_audio
+
+frame_length = 1024
+frame_step = 512
+# Read the file and perform stft
+song = tf.read_file('inputs/153337.mp3.wav')
+waveform = decode_audio(song, 'wav', samples_per_second=44100, channel_count=1)
+decomp = stft(tf.transpose(waveform), frame_length, frame_step)
+
+# Get rid of the channel dimension and flip it, so its a series of vectors
+inputs = tf.transpose(tf.squeeze(decomp))
+shape = 2583
+
+# Initialize the weights and get the outputs
+init_lstm(shape, shape)
+outputs = complex_lstm_forward(inputs, tf.zeros(shape, 1), tf.zeros(shape, 1))
+
+new_decomp = tf.reshape(tf.transpose(outputs), [1, tf.shape(inputs)[1], shape])
+new_song = inverse_stft(new_decomp, frame_length, frame_step)
+song = encode_audio(new_song, 'wav', samples_per_second=44100)
+write = tf.write_file('fun.wav', song)
+
+with tf.Session() as sess:
+  sess.run(write)

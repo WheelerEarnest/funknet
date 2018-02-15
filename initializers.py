@@ -26,7 +26,7 @@ from tensorflow.python.ops.init_ops import Initializer
 class complex_random_uniform(Initializer):
 
 
-  def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=tf.complex64):
+  def __init__(self, minval=-1.0, maxval=1.0, seed=None, dtype=tf.complex64):
     self.minval = minval
     self.maxval = maxval
     self.seed = seed

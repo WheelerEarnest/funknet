@@ -19,7 +19,7 @@
 
 import numpy as np
 import tensorflow as tf
-from initializer import complex_random_uniform
+from initializers import complex_random_uniform
 
 def init_lstm(input_size, activation_size, path=None):
   """
@@ -29,7 +29,7 @@ def init_lstm(input_size, activation_size, path=None):
   :param path: a string that denotes a path to predefined weights
   :return:
   """
-  if path == None:
+  if path is None:
     with tf.variable_scope('lstm'):
       tf.get_variable('wf', shape=(activation_size, activation_size + input_size), dtype=tf.complex64,
                       initializer=complex_random_uniform)
@@ -51,7 +51,7 @@ def init_lstm(input_size, activation_size, path=None):
                       initializer=complex_random_uniform)
       tf.get_variable('by', shape=(input_size, 1), dtype=tf.complex64,
                       initializer=complex_random_uniform)
-      tf.global_variables_initializer()
+
 
 def complex_lstm_cell(x, a_prev, c_prev):
   """
@@ -113,19 +113,17 @@ def complex_lstm_forward(X, a0, c0):
   :param c0: initial state memory cell
   :return:
   """
+  outputs = tf.TensorArray(tf.complex64, size=2583)
 
   def body(i, a, c, outputs):
     a_next, c_next, out = complex_lstm_cell(X[:,i], a, c)
-    return i+1, a_next, c_next, tf.concat([outputs, out], 1)
+    outputs = outputs.write(i, out)
+    return i+1, a_next, c_next, outputs
 
   def cond(i, a, c, outputs):
     return i < tf.shape(X)[1]
 
-  __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, tf.zeros(tf.shape(X), tf.complex64)),
-                                      shape_invariants=(tf.TensorShape([]),
-                                                        tf.TensorShape([tf.shape(X)[1]]),
-                                                        tf.TensorShape([tf.shape(X)[1]]),
-                                                        tf.TensorShape([None])))
+  __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, outputs))
   return outputs
 
 

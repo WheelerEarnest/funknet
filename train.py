@@ -22,6 +22,8 @@ from lstm import *
 from tensorflow.contrib.signal import *
 from tensorflow.contrib.ffmpeg import encode_audio, decode_audio
 
+tf.reset_default_graph()
+
 frame_length = 1024
 frame_step = 512
 # Read the file and perform stft
@@ -35,12 +37,14 @@ shape = 2583
 
 # Initialize the weights and get the outputs
 init_lstm(shape, shape)
-outputs = complex_lstm_forward(inputs, tf.zeros(shape, 1), tf.zeros(shape, 1))
+outputs = complex_lstm_forward(inputs, tf.zeros([shape, 1], dtype=tf.complex64), tf.zeros([shape, 1], dtype=tf.complex64))
+outputs = outputs.gather([outputs.size()])
 
-new_decomp = tf.reshape(tf.transpose(outputs), [1, tf.shape(inputs)[1], shape])
+new_decomp = tf.reshape(tf.transpose(outputs), [1, frame_length // 2 + 1, shape])
 new_song = inverse_stft(new_decomp, frame_length, frame_step)
 song = encode_audio(new_song, 'wav', samples_per_second=44100)
-write = tf.write_file('fun.wav', song)
+write = tf.write_file('crap.wav', song)
 
 with tf.Session() as sess:
+  tf.global_variables_initializer()
   sess.run(write)

@@ -1,0 +1,4 @@
+Hello, this is my music synthesis project.  It is also my first machine learning project that I constructed from the
+ground up (well, with tensorflow, so not completely from the ground up).
+
+Uses raw audio extracted from wav files in order to generate music.

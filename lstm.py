@@ -1,4 +1,4 @@
-#----------------------------------------------------------
+# ----------------------------------------------------------
 # Author: Wheeler Earnest
 #
 # Project: FunkNet
@@ -15,11 +15,12 @@
 #   Or to be more specific, an assignment in the deep learning
 #   specialization on Coursera:
 #   https://www.coursera.org/learn/nlp-sequence-models
-#-----------------------------------------------------------
+# -----------------------------------------------------------
 
 import numpy as np
 import tensorflow as tf
 from initializers import complex_random_uniform
+
 
 def init_lstm(input_size, activation_size, path=None):
   """
@@ -78,25 +79,24 @@ def complex_lstm_cell(x, a_prev, c_prev):
     wy = tf.get_variable('wy', dtype=tf.complex64)
     by = tf.get_variable('by', dtype=tf.complex64)
 
-
-    #Concatenate the previous activation and the input (for speedup)
+    # Concatenate the previous activation and the input (for speedup)
     a_x = tf.concat([a_prev, x], axis=0)
-    #Calculate the candidate to replace c.
+    # Calculate the candidate to replace c.
     c_cand = tf.tanh(wc @ a_x + bc)
-    #Calculate the update gate.
+    # Calculate the update gate.
     u_gate = tf.sigmoid(wu @ a_x + bu)
-    #Calculate the forget gate.
+    # Calculate the forget gate.
     f_gate = tf.sigmoid(wf @ a_x + bf)
-    #Calculate the output gate
+    # Calculate the output gate
     o_gate = tf.sigmoid(wo @ a_x + bo)
-    #Calulate c, a, and y for this time-step
+    # Calulate c, a, and y for this time-step
     c_next = (u_gate * c_cand) + (f_gate * c_prev)
     a_next = o_gate * tf.tanh(c_next)
     y = wy @ a_next + by
     return a_next, c_next, y
 
 
-def complex_lstm_forward(X, a0, c0):
+def complex_lstm_forward_training(X, a0, c0):
   """
   This method allows for you to execute the lstm
   :param X: input Vectors should be of size (stfsBins, Frames)
@@ -107,19 +107,12 @@ def complex_lstm_forward(X, a0, c0):
   outputs = tf.TensorArray(tf.complex64, size=2583)
 
   def body(i, a, c, outputs):
-    a_next, c_next, out = complex_lstm_cell(X[:,i:i+1], a, c)
+    a_next, c_next, out = complex_lstm_cell(X[:, i:i + 1], a, c)
     outputs = outputs.write(i, out)
-    print('loop')
-    return i+1, a_next, c_next, outputs
+    return i + 1, a_next, c_next, outputs
 
   def cond(i, a, c, outputs):
     return i < tf.shape(X)[1]
 
   __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, outputs))
   return outputs
-
-
-
-
-
-

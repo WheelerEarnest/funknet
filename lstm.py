@@ -95,6 +95,7 @@ def complex_lstm_cell(x, a_prev, c_prev):
     y = wy @ a_next + by
     return a_next, c_next, y
 
+
 def complex_lstm_forward(X, a0, c0):
   """
   This method allows for you to execute the lstm
@@ -106,8 +107,9 @@ def complex_lstm_forward(X, a0, c0):
   outputs = tf.TensorArray(tf.complex64, size=2583)
 
   def body(i, a, c, outputs):
-    a_next, c_next, out = complex_lstm_cell(X[:,i], a, c)
+    a_next, c_next, out = complex_lstm_cell(X[:,i:i+1], a, c)
     outputs = outputs.write(i, out)
+    print('loop')
     return i+1, a_next, c_next, outputs
 
   def cond(i, a, c, outputs):

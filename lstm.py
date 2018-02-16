@@ -115,4 +115,5 @@ def complex_lstm_forward_training(X, a0, c0):
     return i < tf.shape(X)[1]
 
   __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, outputs))
-  return outputs
+  # Convert the outputs into a tensor
+  return outputs.stack()

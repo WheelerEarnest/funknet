@@ -33,7 +33,7 @@ def cost(training_data, model_output):
 
   J = tf.zeros([1])
   def body(i, x, y_hat, J):
-    J = J + loss(x[i], y_hat[i])
+    J = J + loss(x.read(i), y_hat.read(i))
     return i + 1, x, y_hat, J
 
   def cond(i, x, y_hat, J):

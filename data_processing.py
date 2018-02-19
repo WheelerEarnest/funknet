@@ -53,6 +53,7 @@ def transform(waveform_list, frame_length, frame_step, fft_length=None):
   """
   # TensorArray that contains the transformed waveforms
   decomp = tf.TensorArray(tf.complex64, size=waveform_list.size())
+  i = tf.constant(0)
 
   # Loop through the array and decompose each waveform
   def body(i, wave_list, decomp):
@@ -67,7 +68,7 @@ def transform(waveform_list, frame_length, frame_step, fft_length=None):
   def cond(i, wave_list, decomp):
     return i < wave_list.size()
 
-  __, __, decomp = tf.while_loop(cond, body, (0, waveform_list, decomp))
+  __, __, decomp = tf.while_loop(cond, body, (i, waveform_list, decomp))
   return decomp
 
 def reform(transform_list, frame_length, frame_step, fft_length=None):
@@ -80,6 +81,7 @@ def reform(transform_list, frame_length, frame_step, fft_length=None):
   :return: Returns a TensorArray of raw audio
   """
   waveform_list = tf.TensorArray(tf.float32, size=transform_list.size())
+  i = tf.constant(0)
 
   def body(i, wave_list):
     # We need to reshape the outputs of the net.
@@ -94,7 +96,7 @@ def reform(transform_list, frame_length, frame_step, fft_length=None):
   def cond(i):
     return i < transform_list.size()
 
-  __, waveform_list = tf.while_loop(cond, body, (0, waveform_list))
+  __, waveform_list = tf.while_loop(cond, body, (i, waveform_list))
   return waveform_list
 
 def save_songs(folder, songs, sample_rate):
@@ -106,6 +108,7 @@ def save_songs(folder, songs, sample_rate):
   :param sample_rate: The sample rate for the new audio
   :return: Returns an integer and the write operation
   """
+  tf.constant(0)
 
   def body(i, write):
     song_tensor = songs.read(i)
@@ -116,7 +119,7 @@ def save_songs(folder, songs, sample_rate):
   def cond(i, write):
     return i < songs.size()
 
-  __, write = tf.while_loop(cond, body, (0, None))
+  __, write = tf.while_loop(cond, body, (i, None))
   return write
 
 

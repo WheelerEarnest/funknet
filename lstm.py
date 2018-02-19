@@ -102,9 +102,11 @@ def complex_lstm_forward_training(X, a0, c0):
   :param X: input Vectors should be of size (stfsBins, Frames)
   :param a0: initial state activations
   :param c0: initial state memory cell
-  :return:
+  :return: The outputs of the model
   """
+
   outputs = tf.TensorArray(tf.complex64, size=2583)
+  i = tf.constant(0)
 
   def body(i, a, c, outputs):
     a_next, c_next, out = complex_lstm_cell(X[:, i:i + 1], a, c)
@@ -114,6 +116,6 @@ def complex_lstm_forward_training(X, a0, c0):
   def cond(i, a, c, outputs):
     return i < tf.shape(X)[1]
 
-  __, __, __, outputs = tf.while_loop(cond, body, (0, a0, c0, outputs))
+  __, __, __, outputs = tf.while_loop(cond, body, (i, a0, c0, outputs))
   # Convert the outputs into a tensor
   return outputs.stack()

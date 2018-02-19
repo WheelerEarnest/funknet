@@ -16,11 +16,8 @@
 #   https://www.coursera.org/learn/nlp-sequence-models
 # ------------------------------------------------------------------------------------------------------
 
-import numpy as np
-import tensorflow as tf
+from data_processing import *
 from lstm import *
-from tensorflow.contrib.signal import *
-from tensorflow.contrib.ffmpeg import encode_audio, decode_audio
 
 
 def cost(training_data, model_output):
@@ -31,17 +28,22 @@ def cost(training_data, model_output):
   :return: Returns the cost for these inputs
   """
 
-  J = tf.zeros([1])
+  cost = tf.constant(0.0)
+  i = tf.constant(0)
+
   def body(i, x, y_hat, J):
+    print(tf.shape(loss(x.read(i), y_hat.read(i))))
     J = J + loss(x.read(i), y_hat.read(i))
+    J.set_shape(cost.get_shape())
     return i + 1, x, y_hat, J
 
   def cond(i, x, y_hat, J):
     return i < x.size()
 
-  __, __, __, J = tf.while_loop(cond, body, (0, training_data, model_output, J))
+  __, __, __, J = tf.while_loop(cond, body, (i, training_data, model_output, cost))
 
   return J
+
 
 def loss(x, y_hat):
   """
@@ -52,10 +54,59 @@ def loss(x, y_hat):
   """
   # We dont care about the first input or the last output, as we are comparing the output
   #   to the input of the next timestep
-  y_hat = y_hat[:-1,:]
-  x = x[1:,:]
-  diff = y_hat - x
-  return tf.complex_abs(diff)
+  y_hat = y_hat[:, :-1]
+  x = x[:, 1:]
+  diff = tf.abs(y_hat - x)
+  norm = tf.norm(diff, ord=2, axis=1)
+  return tf.reduce_sum(norm)
+
+
+def feed_data(songs, activation_size):
+  """
+
+  :param songs:TensorArray of all the decomposed audio
+  :param activation_size: size of the activation vector
+  :return: returns the a TensorArray containing the outputs of the net
+  """
+  outputs = tf.TensorArray(size=songs.size(), dtype=tf.complex64)
+
+  def body(i, outputs):
+    out = complex_lstm_forward_training(songs.read(i), tf.zeros((activation_size, 1), dtype=tf.complex64),
+                                  tf.zeros((activation_size, 1), dtype=tf.complex64))
+    ouputs = outputs.write(i, out)
+    return i+1, outputs
+
+  def cond(i, outputs):
+    return i < outputs.size()
+
+  __, outputs = tf.while_loop(cond, body, (0, outputs))
+  return outputs
+
+
+def train(iterations):
+  frame_length = 1024
+  frame_step = 512
+  frame_size = frame_length // 2 + 1
+  with tf.Session() as sess:
+    optimizer = tf.train.AdamOptimizer(0.01)
+    init_lstm(frame_size, frame_size)
+    sess.run(tf.global_variables_initializer())
+    saver = tf.train.Saver(tf.global_variables())
+    songs = get_songs('inputs/', 44100)
+    trans_songs = transform(songs, frame_length, frame_step)
+    outputs = feed_data(trans_songs, frame_size)
+    J = cost(trans_songs, outputs)
+    train_step = optimizer.minimize(J)
+    for i in range(iterations):
+      sess.run(train_step)
+      if i % 20 == 0:
+        print("iteration: " + str(i))
+        print("cost: " + str(J))
+        saver.save(sess, 'models/lstm-', i)
+
+
+train(1000)
+
 
 
 

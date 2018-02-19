@@ -105,6 +105,8 @@ def complex_lstm_forward_training(X, a0, c0):
   :return: The outputs of the model
   """
 
+
+
   outputs = tf.TensorArray(tf.complex64, size=2583)
   i = tf.constant(0)
 
@@ -118,4 +120,4 @@ def complex_lstm_forward_training(X, a0, c0):
 
   __, __, __, outputs = tf.while_loop(cond, body, (i, a0, c0, outputs))
   # Convert the outputs into a tensor
-  return outputs.stack()
+  return tf.transpose(tf.squeeze(outputs.stack()))

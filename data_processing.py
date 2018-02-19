@@ -16,6 +16,7 @@
 #   https://www.coursera.org/learn/nlp-sequence-models
 # ------------------------------------------------------------------------------------------------------
 
+import numpy as np
 import tensorflow as tf
 from os import listdir
 from tensorflow.contrib.ffmpeg import encode_audio, decode_audio
@@ -122,4 +123,26 @@ def save_songs(folder, songs, sample_rate):
   __, write = tf.while_loop(cond, body, (i, None))
   return write
 
+
+def get_dataset():
+  files = listdir('processed/')
+
+
+  for file_name, i in zip(files, range(len(files))):
+    arr = np.load(file_name)
+
+
+
+def preprocess():
+  songs = get_songs('inputs/', 44100)
+  trans = transform(songs, 1024, 512)
+
+  with tf.Session() as sess:
+    size = sess.run(trans.size())
+    for i in range(size):
+      temp = trans.read(i)
+      raw = sess.run(temp)
+      np.save('processed/' + str(i), raw)
+
+# preprocess()
 

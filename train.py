@@ -18,6 +18,7 @@
 
 from data_processing import *
 from lstm import *
+import tensorflow as tf
 
 
 def cost(training_data, model_output):
@@ -87,22 +88,28 @@ def train(iterations):
   frame_length = 1024
   frame_step = 512
   frame_size = frame_length // 2 + 1
+
   with tf.Session() as sess:
     optimizer = tf.train.AdamOptimizer(0.01)
     init_lstm(frame_size, frame_size)
     sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver(tf.global_variables())
-    songs = get_songs('inputs/', 44100)
-    trans_songs = transform(songs, frame_length, frame_step)
-    outputs = feed_data(trans_songs, frame_size)
-    J = cost(trans_songs, outputs)
+    sound = np.load('processed/0.npy')
+    print(np.shape(sound))
+    # outputs = feed_data(trans_songs, frame_size)
+    X = tf.placeholder(tf.complex64, shape=np.shape(sound))
+    out = complex_lstm_forward_training(X, tf.zeros((frame_size, 1), dtype=tf.complex64),
+                                        tf.zeros((frame_size, 1), dtype=tf.complex64))
+    J = loss(X, out)
+    writer = tf.summary.FileWriter('graph/', sess.graph)
     train_step = optimizer.minimize(J)
     for i in range(iterations):
-      sess.run(train_step)
+      sess.run(train_step, feed_dict={X: sound})
       if i % 20 == 0:
         print("iteration: " + str(i))
         print("cost: " + str(J))
         saver.save(sess, 'models/lstm-', i)
+    writer.close()
 
 
 train(1000)

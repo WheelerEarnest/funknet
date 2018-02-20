@@ -19,6 +19,7 @@
 from data_processing import *
 from lstm import *
 import tensorflow as tf
+from optimizers import complex_adam
 
 
 def cost(training_data, model_output):
@@ -90,7 +91,7 @@ def train(iterations):
   frame_size = frame_length // 2 + 1
 
   with tf.Session() as sess:
-    optimizer = tf.train.AdamOptimizer(0.01)
+    optimizer = complex_adam(0.01)
     init_lstm(frame_size, frame_size)
     sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver(tf.global_variables())

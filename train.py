@@ -58,8 +58,9 @@ def loss(x, y_hat):
   #   to the input of the next timestep
   y_hat = y_hat[:, :-1]
   x = x[:, 1:]
-  diff = tf.abs(y_hat - x)
-  norm = tf.norm(diff, ord=2, axis=1)
+  diff = y_hat - x
+  # Divide the norm by 2 to make the gradient cleaner
+  norm = (tf.norm(diff, ord=2, axis=1) ** 2) / 2.0
   return tf.reduce_sum(norm)
 
 

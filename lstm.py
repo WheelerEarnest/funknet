@@ -44,12 +44,13 @@ def init_lstm(input_size, activation_size, path=None):
       tf.get_variable('by', shape=(input_size, 1))
 
 
-def complex_lstm_cell(x, a_prev, c_prev):
+def complex_lstm_cell(x, a_prev, c_prev, timestep):
   """
 
   :param x: Input vector at the current time-step. (n_x, m)
   :param a_prev: The activations of the previous time-step. (n_a, m)
   :param c_prev: The memory cell of the previous time-step. (n_a, m)
+  :param timestep: The timestep that the cell is being executed in
 
   No longer using a python dict, instead using tensorflow's variable sharing
     wf - weights for the forget gate. (n_a, n_a + n_x)
@@ -93,7 +94,94 @@ def complex_lstm_cell(x, a_prev, c_prev):
     c_next = (u_gate * c_cand) + (f_gate * c_prev)
     a_next = o_gate * tf.tanh(c_next)
     y = wy @ a_next + by
+
+    # We need to pack the intermediate values into a collection for use in backprop
+    # The order of package is a_x, c_prev, c_cand, u_gate, f_gate, o_gate, c_next, a_next
+    with tf.variable_scope(str(timestep)):
+      cache = 'cache'
+      tf.add_to_collection(cache, a_x)
+      tf.add_to_collection(cache, c_prev)
+      tf.add_to_collection(cache, c_cand)
+      tf.add_to_collection(cache, u_gate)
+      tf.add_to_collection(cache, f_gate)
+      tf.add_to_collection(cache, o_gate)
+      tf.add_to_collection(cache, c_next)
+      tf.add_to_collection(cache, a_next)
     return a_next, c_next, y
+
+
+def complex_lstm_cell_back(dy, da_next, dc_next, timestep):
+  """
+  :param dy: The gradient coming down from an upper layer (either cost or another lstm)
+  :param da_next: The gradient of the activation vector from the next timestep
+  :param dc_next: The gradient of the memory cell from the next timestep
+  :param timestep: The timestep that this cell is in
+  :return:
+    da_pass: The gradient of the activation vector to be sent to the previous timestep
+    dx_pass: The gradient of the input to be sent to any layers underneath this lstm
+    dc_pass: The gradient of the memory cell to be sent to the previous timestep
+  """
+  with tf.variable_scope('lstm', reuse=True):
+    wf = tf.get_variable('wf', dtype=tf.complex64)
+    bf = tf.get_variable('bf', dtype=tf.complex64)
+    wu = tf.get_variable('wu', dtype=tf.complex64)
+    bu = tf.get_variable('bu', dtype=tf.complex64)
+    wo = tf.get_variable('wo', dtype=tf.complex64)
+    bo = tf.get_variable('bo', dtype=tf.complex64)
+    wc = tf.get_variable('wc', dtype=tf.complex64)
+    bc = tf.get_variable('bc', dtype=tf.complex64)
+    wy = tf.get_variable('wy', dtype=tf.complex64)
+    by = tf.get_variable('by', dtype=tf.complex64)
+    [a_x, c_prev, c_cand, u_gate, f_gate, o_gate, c, a] = tf.get_collection('cache', 'lstm/' + str(timestep))
+
+    da = tf.transpose(wy) @ dy + da_next
+
+    dwy = dy @ tf.transpose(a)
+    dby = dy
+
+    dc = da * o_gate * (1 - tf.tanh(c) ** 2) + dc_next
+
+    do_gate = da * tf.tanh(c) * o_gate * (1 - o_gate)
+    df_gate = dc * c_prev * f_gate * (1 - f_gate)
+    du_gate = c_cand * dc * u_gate * (1 - u_gate)
+
+    dc_cand = u_gate * (1 - tf.tanh(c_cand) ** 2) * dc
+
+    dwo = du_gate @ tf.transpose(a_x)
+    dbo = do_gate
+    dxo = tf.transpose(wo) @ du_gate
+
+    dwf = df_gate @ tf.transpose(a_x)
+    dbf = df_gate
+    dxf = tf.transpose(wf) @ df_gate
+
+    dwu = du_gate @ tf.transpose(a_x)
+    dbu = du_gate
+    dxu = tf.transpose(wu) @ du_gate
+
+    dwc = dc_cand @ tf.transpose(a_x)
+    dbc = dc_cand
+    dxc = tf.transpose(wc) @ dc_cand
+
+    dx = dxo + dxf + dxu + dxc
+
+    input_size = tf.shape(dc)[0]
+    # The values we will be passing back to the previous timestep
+    da_pass = dx[:input_size, :]
+    dx_pass = dx[input_size:, :]
+    dc_pass = dc * f_gate
+    # Lets put the gradients into collections
+    tf.add_to_collection('dwy', dwy)
+    tf.add_to_collection('dby', dby)
+    tf.add_to_collection('dwo', dwo)
+    tf.add_to_collection('dbo', dbo)
+    tf.add_to_collection('dwf', dwf)
+    tf.add_to_collection('dbf', dbf)
+    tf.add_to_collection('dwu', dwu)
+    tf.add_to_collection('dbu', dbu)
+    tf.add_to_collection('dwc', dwc)
+    tf.add_to_collection('dbc', dbc)
+    return da_pass, dx_pass, dc_pass
 
 
 def complex_lstm_forward_training(X, a0, c0):
@@ -104,8 +192,6 @@ def complex_lstm_forward_training(X, a0, c0):
   :param c0: initial state memory cell
   :return: The outputs of the model
   """
-
-
 
   outputs = tf.TensorArray(tf.complex64, size=2583)
   i = tf.constant(0)

@@ -17,9 +17,9 @@
 #   https://www.coursera.org/learn/nlp-sequence-models
 # -----------------------------------------------------------
 
-import numpy as np
 import tensorflow as tf
-from initializers import complex_random_uniform
+
+from deprecated.initializers import complex_random_uniform
 
 
 def init_lstm(input_size, activation_size, path=None):
@@ -120,6 +120,7 @@ def complex_lstm_cell_back(dy, da_next, dc_next, timestep):
     da_pass: The gradient of the activation vector to be sent to the previous timestep
     dx_pass: The gradient of the input to be sent to any layers underneath this lstm
     dc_pass: The gradient of the memory cell to be sent to the previous timestep
+    Note: Once this has finished across the training set, it will have created collections with the gradients
   """
   with tf.variable_scope('lstm', reuse=True):
     wf = tf.get_variable('wf', dtype=tf.complex64)
@@ -207,3 +208,6 @@ def complex_lstm_forward_training(X, a0, c0):
   __, __, __, outputs = tf.while_loop(cond, body, (i, a0, c0, outputs))
   # Convert the outputs into a tensor
   return tf.transpose(tf.squeeze(outputs.stack()))
+
+def complex_lstm_back_training(loss):
+  None

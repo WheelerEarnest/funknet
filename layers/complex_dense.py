@@ -15,12 +15,3 @@
 #   specialization on Coursera: 
 #   https://www.coursera.org/learn/nlp-sequence-models
 #------------------------------------------------------------------------------------------------------
-
-import tensorflow as tf
-from tensorflow.python.framework import dtypes
-from tensorflow.python.training import adam
-
-class complex_adam(adam.AdamOptimizer):
-  def _valid_dtypes(self):
-    return set(
-      [dtypes.float16, dtypes.bfloat16, dtypes.float32, dtypes.float64, dtypes.complex64])

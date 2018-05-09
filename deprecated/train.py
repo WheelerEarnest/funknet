@@ -16,10 +16,11 @@
 #   https://www.coursera.org/learn/nlp-sequence-models
 # ------------------------------------------------------------------------------------------------------
 
+import tensorflow as tf
 from data_processing import *
 from lstm import *
-import tensorflow as tf
-from optimizers import complex_adam
+
+from deprecated.optimizers import complex_adam
 
 
 def cost(training_data, model_output):
